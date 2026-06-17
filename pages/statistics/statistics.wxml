@@ -1,0 +1,80 @@
+<view class="container">
+  <!-- 周期切换 -->
+  <view class="period-tabs">
+    <view class="tab-item {{currentPeriod === item.value ? 'active' : ''}}" 
+          wx:for="{{periods}}" 
+          wx:key="value"
+          bindtap="switchPeriod"
+          data-period="{{item.value}}">
+      <text>{{item.label}}</text>
+    </view>
+  </view>
+
+  <!-- 统计概览 -->
+  <view class="stats-card">
+    <view class="stats-grid">
+      <view class="stats-item">
+        <text class="stats-value">{{statistics.totalAmount}}</text>
+        <text class="stats-label">总奶量(ml)</text>
+      </view>
+      <view class="stats-item">
+        <text class="stats-value">{{statistics.totalCount}}</text>
+        <text class="stats-label">喂养次数</text>
+      </view>
+      <view class="stats-item">
+        <text class="stats-value">{{statistics.avgAmount}}</text>
+        <text class="stats-label">平均奶量(ml)</text>
+      </view>
+      <view class="stats-item" wx:if="{{statistics.avgCountPerDay > 0}}">
+        <text class="stats-value">{{statistics.avgCountPerDay}}</text>
+        <text class="stats-label">日均次数</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 趋势图表 -->
+  <view class="chart-card" wx:if="{{chartData.length > 0}}">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>奶量趋势</text>
+    </view>
+    <view class="chart-container">
+      <view class="chart-bars">
+        <view class="bar-item" wx:for="{{chartData}}" wx:key="date">
+          <view class="bar-wrapper">
+            <view class="bar" style="height: {{item.height}}%"></view>
+          </view>
+          <text class="bar-label">{{item.displayDate}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 间隔分析 -->
+  <view class="interval-card" wx:if="{{intervalAnalysis.avgInterval > 0}}">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>喂养间隔</text>
+    </view>
+    <view class="interval-content">
+      <view class="interval-item">
+        <text class="interval-label">平均间隔</text>
+        <text class="interval-value">{{intervalAnalysis.avgInterval}}分钟</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 喂养建议 -->
+  <view class="suggestion-card" wx:if="{{suggestions.length > 0}}">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>喂养建议</text>
+    </view>
+    <view class="suggestion-list">
+      <view class="suggestion-item" wx:for="{{suggestions}}" wx:key="*this">
+        <text class="suggestion-dot">•</text>
+        <text class="suggestion-text">{{item}}</text>
+      </view>
+    </view>
+  </view>
+</view>

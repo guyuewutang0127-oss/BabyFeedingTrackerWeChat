@@ -1,0 +1,151 @@
+<view class="container">
+  <!-- 开关控制 -->
+  <view class="switch-card" wx:if="{{hasSchedule}}">
+    <view class="switch-item">
+      <text class="switch-label">启用时间表</text>
+      <switch checked="{{schedule.enabled}}" bindchange="toggleSchedule" color="#FF6B8A"/>
+    </view>
+  </view>
+
+  <!-- 时间表列表 -->
+  <view class="schedule-card" wx:if="{{hasSchedule && schedule.enabled}}">
+    <view class="card-header">
+      <view class="card-title">
+        <view class="card-title-icon"></view>
+        <text>今日时间表</text>
+      </view>
+      <text class="template-name" wx:if="{{schedule.templateName}}">{{schedule.templateName}}</text>
+    </view>
+    <view class="schedule-hint">时间表每日固定，后续顿次由「上一顿+间隔」自动计算。第一顿参考时间可视为昨日最后一顿，可手动调整或一键同步。</view>
+    <view class="sync-row" wx:if="{{hasSchedule && schedule.schedule.length > 0}}">
+      <text class="sync-btn" bindtap="syncFirstTimeFromYesterday" wx:if="{{hasLastYesterday}}">从昨日最后一顿同步参考时间（{{lastYesterdayTime}}）</text>
+      <text class="sync-btn disabled" wx:else>昨日无记录，无法同步</text>
+    </view>
+    
+    <view class="schedule-list">
+      <view class="schedule-item" wx:for="{{schedule.schedule}}" wx:key="id">
+        <view class="schedule-info">
+          <view class="schedule-name-time">
+            <text class="schedule-name">{{item.name}}</text>
+            <text class="schedule-time">预计 {{item.targetTime}}</text>
+          </view>
+          <view class="schedule-detail">
+            <text class="schedule-interval">与下一顿间隔 {{item.interval}} 分钟</text>
+            <text class="schedule-amount">建议奶量 {{item.targetAmount}}ml</text>
+            <text class="schedule-type tag-{{item.type}}">
+              {{item.type === 'breastfeeding' ? '母乳' : item.type === 'mixed' ? '混合' : '奶粉'}}
+            </text>
+          </view>
+          <text class="schedule-note" wx:if="{{item.note}}">{{item.note}}</text>
+        </view>
+        <view class="schedule-actions">
+          <text class="action-btn edit" bindtap="editFeedTime" data-index="{{index}}">编辑</text>
+          <text class="action-btn delete" bindtap="deleteFeedTime" data-index="{{index}}">删除</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 添加按钮 -->
+    <view class="add-btn" bindtap="addFeedTime">
+      <text class="add-icon">+</text>
+      <text class="add-text">添加喂养时间</text>
+    </view>
+  </view>
+
+  <!-- 模板选择 -->
+  <view class="template-card" wx:if="{{!isEditing}}">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>快速模板</text>
+    </view>
+    
+    <view class="template-list">
+      <view class="template-item" 
+            wx:for="{{templateList}}" 
+            wx:key="key"
+            bindtap="selectTemplate"
+            data-key="{{item.key}}">
+        <text class="template-item-name">{{item.name}}</text>
+        <text class="template-item-desc">{{item.description}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 编辑弹窗 -->
+  <view class="modal-mask" wx:if="{{isEditing}}" bindtap="cancelEdit">
+    <view class="modal-content" catchtap="preventBubble">
+      <view class="modal-header">
+        <text class="modal-title">{{editIndex >= 0 ? '编辑喂养时间' : '添加喂养时间'}}</text>
+      </view>
+      
+      <view class="modal-body">
+        <view class="form-item">
+          <text class="form-label required">名称</text>
+          <input class="form-input" 
+                 placeholder="例如：第一顿、早餐奶" 
+                 value="{{formData.name}}"
+                 bindinput="onNameInput"/>
+        </view>
+        
+        <view class="form-item" wx:if="{{editIndex === 0}}">
+          <text class="form-label required">参考时间（如昨日最后一顿，可调）</text>
+          <picker mode="time" value="{{formData.targetTime}}" bindchange="onTimeChange">
+            <view class="picker-item">
+              <text class="picker-text">{{formData.targetTime}}</text>
+              <text class="picker-arrow">▼</text>
+            </view>
+          </picker>
+        </view>
+        <view class="form-item" wx:elif="{{editIndex > 0}}">
+          <text class="form-label">预计时间（由上一顿+间隔计算）</text>
+          <view class="form-readonly">{{formData.targetTime}}</view>
+        </view>
+        <view class="form-item" wx:else>
+          <text class="form-label">预计时间</text>
+          <view class="form-readonly">{{formData.targetTime}}</view>
+        </view>
+        
+        <view class="form-item">
+          <text class="form-label required">与下一顿间隔（分钟）</text>
+          <input class="form-input" 
+                 type="number" 
+                 placeholder="如 180 表示 3 小时" 
+                 value="{{formData.interval}}"
+                 bindinput="onIntervalInput"/>
+        </view>
+        
+        <view class="form-item">
+          <text class="form-label required">建议奶量 (ml)</text>
+          <input class="form-input" 
+                 type="number" 
+                 placeholder="请输入建议奶量" 
+                 value="{{formData.targetAmount}}"
+                 bindinput="onAmountInput"/>
+        </view>
+        
+        <view class="form-item">
+          <text class="form-label">喂养类型</text>
+          <picker bindchange="onTypeChange" value="{{typeIndex}}" range="{{typeOptions}}" range-key="label">
+            <view class="picker-item">
+              <text class="picker-text">{{typeOptions[typeIndex].label}}</text>
+              <text class="picker-arrow">▼</text>
+            </view>
+          </picker>
+        </view>
+        
+        <view class="form-item">
+          <text class="form-label">备注</text>
+          <input class="form-input" 
+                 placeholder="可选" 
+                 value="{{formData.note}}"
+                 bindinput="onNoteInput"/>
+        </view>
+      </view>
+      
+      <view class="modal-footer">
+        <button class="modal-btn modal-btn-cancel" bindtap="cancelEdit">取消</button>
+        <button class="modal-btn modal-btn-confirm" bindtap="saveEdit">保存</button>
+      </view>
+    </view>
+  </view>
+</view>

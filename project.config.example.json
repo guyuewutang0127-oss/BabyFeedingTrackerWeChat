@@ -1,0 +1,16 @@
+{
+  "description": "宝宝喂养记录小程序",
+  "packOptions": {},
+  "setting": {
+    "urlCheck": true,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true
+  },
+  "compileType": "miniprogram",
+  "miniprogramRoot": "./",
+  "appid": "your-appid-here",
+  "projectname": "baobaoweiyang2",
+  "condition": {}
+}

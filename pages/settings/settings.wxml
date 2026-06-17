@@ -1,0 +1,153 @@
+<view class="container">
+  <!-- 宝宝信息 -->
+  <view class="card">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>宝宝信息</text>
+    </view>
+    
+    <view class="form-item">
+      <text class="form-label">头像</text>
+      <view class="avatar-wrapper" bindtap="chooseAvatar">
+        <image class="avatar" src="{{babyInfo.avatar || '/images/default_baby.png'}}" mode="aspectFill"/>
+        <text class="avatar-hint">点击更换</text>
+      </view>
+    </view>
+    
+    <view class="form-item">
+      <text class="form-label">昵称</text>
+      <input class="form-input" placeholder="请输入宝宝昵称" value="{{babyInfo.name}}" bindinput="onNameInput"/>
+    </view>
+    
+    <view class="form-item">
+      <text class="form-label">出生日期</text>
+      <picker mode="date" value="{{babyInfo.birthDate}}" bindchange="onBirthDateChange">
+        <view class="picker-item">
+          <text class="picker-text">{{babyInfo.birthDate || '请选择出生日期'}}</text>
+          <text class="picker-arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+    
+    <view class="form-item">
+      <text class="form-label">性别</text>
+      <picker bindchange="onGenderChange" value="{{genderIndex}}" range="{{genderOptions}}" range-key="label">
+        <view class="picker-item">
+          <text class="picker-text">{{babyInfo.gender === 'boy' ? '男孩' : '女孩'}}</text>
+          <text class="picker-arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+    
+    <button class="btn btn-primary" bindtap="saveBabyInfo">保存信息</button>
+  </view>
+
+  <!-- 喂养设置 -->
+  <view class="card">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>喂养设置</text>
+    </view>
+    
+    <view class="form-item">
+      <text class="form-label">喂养方式</text>
+      <picker bindchange="onFeedingTypeChange" value="{{feedingTypeIndex}}" range="{{feedingTypeOptions}}" range-key="label">
+        <view class="picker-item">
+          <text class="picker-text">{{feedingTypeLabel}}</text>
+          <text class="picker-arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+    
+    <view class="switch-item">
+      <view class="switch-info">
+        <text class="switch-label">科学喂养计划</text>
+        <text class="switch-desc">根据月龄提供喂养建议</text>
+      </view>
+      <switch checked="{{settings.scientificPlanEnabled}}" bindchange="toggleScientificPlan" color="#FF6B8A"/>
+    </view>
+    
+    <view class="switch-item" wx:if="{{settings.scientificPlanEnabled}}">
+      <view class="switch-info">
+        <text class="switch-label">每顿独立提醒</text>
+        <text class="switch-desc">按时间表提醒每顿喂养</text>
+      </view>
+      <switch checked="{{settings.perFeedReminderEnabled}}" bindchange="togglePerFeedReminder" color="#FF6B8A"/>
+    </view>
+    
+    <view class="list-item" bindtap="goToFeedingSchedule" wx:if="{{settings.scientificPlanEnabled}}">
+      <view class="list-item-content">
+        <text class="list-item-title">喂养时间表</text>
+        <text class="list-item-desc">自定义每日喂养时间</text>
+      </view>
+      <text class="list-item-arrow">></text>
+    </view>
+
+    <view class="switch-item">
+      <view class="switch-info">
+        <text class="switch-label">喂养间隔提醒</text>
+        <text class="switch-desc">距上次喂养超过设定时间时弹窗提醒</text>
+      </view>
+      <switch checked="{{settings.reminderEnabled}}" bindchange="toggleReminder" color="#FF6B8A"/>
+    </view>
+
+    <view class="form-item" wx:if="{{settings.reminderEnabled}}">
+      <text class="form-label">提醒间隔</text>
+      <picker bindchange="onReminderIntervalChange" value="{{reminderIntervalIndex}}" range="{{reminderIntervalOptions}}" range-key="label">
+        <view class="picker-item">
+          <text class="picker-text">{{reminderIntervalLabel}}</text>
+          <text class="picker-arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+  </view>
+
+  <!-- 智能解析（口语化文字提取） -->
+  <view class="card">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>智能解析</text>
+    </view>
+    <view class="form-item">
+      <text class="form-label">解析服务地址（可选）</text>
+      <input class="form-input" 
+             placeholder="如 http://192.168.1.100:3842，留空则仅用规则解析"
+             value="{{settings.parseApiBase}}"
+             bindinput="onParseApiBaseInput"
+             bindblur="saveParseApiBase"/>
+    </view>
+    <text class="form-hint">开启后，记录页「文字提取」会优先用本地小模型理解口语化表达；需在电脑上运行解析服务（见项目 parse-server 目录）。</text>
+  </view>
+
+  <!-- 数据管理 -->
+  <view class="card">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>数据管理</text>
+    </view>
+    
+    <view class="list-item" bindtap="exportToCSV">
+      <view class="list-item-content">
+        <text class="list-item-title">导出CSV</text>
+        <text class="list-item-desc">导出Excel格式的喂养记录</text>
+      </view>
+      <text class="list-item-arrow">></text>
+    </view>
+    
+    <view class="list-item" bindtap="backupData">
+      <view class="list-item-content">
+        <text class="list-item-title">数据备份</text>
+        <text class="list-item-desc">备份数据到本地存储</text>
+      </view>
+      <text class="list-item-arrow">></text>
+    </view>
+    
+    <view class="list-item" bindtap="restoreData">
+      <view class="list-item-content">
+        <text class="list-item-title">恢复数据</text>
+        <text class="list-item-desc">从备份恢复数据</text>
+      </view>
+      <text class="list-item-arrow">></text>
+    </view>
+  </view>
+</view>

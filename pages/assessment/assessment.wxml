@@ -1,0 +1,74 @@
+<view class="container">
+  <!-- 有评估记录 -->
+  <block wx:if="{{hasRecord && assessmentRecord}}">
+    <view class="result-card">
+      <view class="result-header">
+        <text class="result-title">{{assessmentRecord.ageMonths}}月龄评估报告</text>
+        <text class="result-date">{{assessmentRecord.assessmentDate}}</text>
+      </view>
+      
+      <!-- 生长发育评估 -->
+      <view class="result-section">
+        <view class="section-title">生长发育</view>
+        <view class="growth-grid">
+          <view class="growth-item">
+            <text class="growth-label">身高</text>
+            <text class="growth-value">{{assessmentRecord.height.value}}cm</text>
+            <text class="growth-status {{assessmentRecord.height.status.level}}">{{assessmentRecord.height.status.text}}</text>
+            <text class="growth-percent">百分位: {{assessmentRecord.height.percent}}</text>
+          </view>
+          <view class="growth-item">
+            <text class="growth-label">体重</text>
+            <text class="growth-value">{{assessmentRecord.weight.value}}kg</text>
+            <text class="growth-status {{assessmentRecord.weight.status.level}}">{{assessmentRecord.weight.status.text}}</text>
+            <text class="growth-percent">百分位: {{assessmentRecord.weight.percent}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 喂养情况 -->
+      <view class="result-section" wx:if="{{assessmentRecord.feeding}}">
+        <view class="section-title">喂养情况</view>
+        <view class="info-list">
+          <view class="info-item">
+            <text class="info-label">喂养方式</text>
+            <text class="info-value">{{assessmentRecord.feeding.method === 'breastfeeding' ? '纯母乳' : assessmentRecord.feeding.method === 'formula' ? '纯奶粉' : '混合喂养'}}</text>
+          </view>
+          <view class="info-item" wx:if="{{assessmentRecord.feeding.dailyCount}}">
+            <text class="info-label">每日次数</text>
+            <text class="info-value">{{assessmentRecord.feeding.dailyCount}}次</text>
+          </view>
+          <view class="info-item" wx:if="{{assessmentRecord.feeding.dailyAmount}}">
+            <text class="info-label">日均奶量</text>
+            <text class="info-value">{{assessmentRecord.feeding.dailyAmount}}ml</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 喂养评估 -->
+      <view class="result-section" wx:if="{{assessmentRecord.feedingSuggestion}}">
+        <view class="section-title">喂养评估</view>
+        <view class="feeding-result">
+          <view class="feeding-item">
+            <text class="feeding-label">奶量状态</text>
+            <text class="feeding-status {{assessmentRecord.feedingSuggestion.status === '达标' ? 'normal' : 'warning'}}">{{assessmentRecord.feedingSuggestion.status}}</text>
+          </view>
+          <view class="suggestion-text">{{assessmentRecord.feedingSuggestion.suggestion}}</view>
+        </view>
+      </view>
+
+      <!-- 综合建议 -->
+      <view class="result-section" wx:if="{{assessmentRecord.overallSuggestion}}">
+        <view class="section-title">综合建议</view>
+        <view class="overall-suggestion">{{assessmentRecord.overallSuggestion}}</view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 无评估记录 -->
+  <view class="empty-state" wx:if="{{!hasRecord}}">
+    <text class="empty-text">暂无评估记录</text>
+    <text class="empty-subtext">点击下方按钮进行评估</text>
+    <button class="btn btn-primary" bindtap="goToAssessmentForm">开始评估</button>
+  </view>
+</view>

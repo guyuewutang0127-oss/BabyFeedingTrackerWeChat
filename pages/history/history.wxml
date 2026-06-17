@@ -1,0 +1,174 @@
+<view class="container">
+  <!-- 标签切换 -->
+  <view class="tab-bar">
+    <view class="tab-item {{activeTab === 'records' ? 'active' : ''}}" bindtap="switchTab" data-tab="records">
+      <text>喂养记录</text>
+    </view>
+    <view class="tab-item {{activeTab === 'assessment' ? 'active' : ''}}" bindtap="switchTab" data-tab="assessment">
+      <text>评估档案</text>
+    </view>
+  </view>
+
+  <!-- 喂养记录 Tab -->
+  <view class="tab-content" wx:if="{{activeTab === 'records'}}">
+    <!-- 日期筛选 -->
+    <view class="filter-bar">
+      <picker mode="date" bindchange="onDateChange" value="{{filterDate}}">
+        <view class="filter-picker">
+          <text class="filter-text">{{filterDate || '选择日期'}}</text>
+          <text class="filter-icon">▼</text>
+        </view>
+      </picker>
+      <view class="filter-clear" wx:if="{{filterDate}}" bindtap="clearFilter">
+        <text>清除</text>
+      </view>
+    </view>
+
+    <!-- 统计摘要 -->
+    <view class="summary-card" wx:if="{{totalRecords > 0}}">
+      <view class="summary-item">
+        <text class="summary-value">{{summary.totalCount}}</text>
+        <text class="summary-label">记录次数</text>
+      </view>
+      <view class="summary-item">
+        <text class="summary-value">{{summary.totalAmount}}</text>
+        <text class="summary-label">总奶量(ml)</text>
+      </view>
+      <view class="summary-item">
+        <text class="summary-value">{{summary.avgAmount}}</text>
+        <text class="summary-label">平均奶量(ml)</text>
+      </view>
+    </view>
+
+    <!-- 记录列表 -->
+    <view class="records-list">
+      <block wx:for="{{groupedRecords}}" wx:key="date" wx:for-item="group">
+        <view class="date-group">
+          <view class="date-header">
+            <text class="date-text">{{group.displayDate}}</text>
+            <text class="date-count">{{group.records.length}}次</text>
+          </view>
+          
+          <view class="records-container">
+            <block wx:for="{{group.records}}" wx:key="id" wx:for-item="record">
+              <view class="record-item-wrapper">
+                <view class="record-item" 
+                      style="transform: translateX({{record.translateX}}rpx)"
+                      bindtouchstart="touchStart" 
+                      bindtouchmove="touchMove" 
+                      bindtouchend="touchEnd"
+                      data-id="{{record.id}}">
+                  <view class="record-info">
+                    <view class="record-time-type">
+                      <text class="record-time">{{record.displayTime}}</text>
+                      <text class="record-type tag-{{record.feedingType}} {{record.isSupplement ? 'tag-supplement' : ''}}">{{record.feedingTypeName}}</text>
+                    </view>
+                    <view class="record-detail">
+                      <block wx:if="{{record.isSupplement}}">
+                        <text>奶量: {{record.actualAmount}}ml</text>
+                      </block>
+                      <block wx:else>
+                        <text wx:if="{{record.preparedAmount > 0}}">冲泡: {{record.preparedAmount}}ml</text>
+                        <text>实际: {{record.actualAmount}}ml</text>
+                        <text wx:if="{{record.duration > 0}}">时长: {{record.duration}}分钟</text>
+                      </block>
+                    </view>
+                    <text class="record-note" wx:if="{{record.note}}">{{record.note}}</text>
+                  </view>
+                </view>
+                
+                <!-- 删除按钮 -->
+                <view class="delete-btn {{record.showDelete ? 'show' : ''}}" 
+                      bindtap="deleteRecord" 
+                      data-id="{{record.id}}">
+                  <text class="delete-text">删除</text>
+                </view>
+              </view>
+            </block>
+          </view>
+        </view>
+      </block>
+    </view>
+
+    <!-- 加载更多 -->
+    <view class="load-more" wx:if="{{hasMore}}" bindtap="loadMore">
+      <text>加载更多</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{totalRecords === 0}}">
+      <image class="empty-icon" src="/images/empty_history.png" mode="aspectFit"/>
+      <text class="empty-text">暂无喂养记录</text>
+      <text class="empty-subtext">点击右下角按钮添加记录</text>
+    </view>
+  </view>
+
+  <!-- 评估档案 Tab -->
+  <view class="tab-content" wx:if="{{activeTab === 'assessment'}}">
+    <!-- 待完成评估 -->
+    <view class="section" wx:if="{{pendingAssessments.length > 0}}">
+      <view class="section-title">待完成评估</view>
+      <view class="assessment-list">
+        <view class="assessment-item pending" 
+              wx:for="{{pendingAssessments}}" 
+              wx:key="ageMonths"
+              bindtap="goToAssessment"
+              data-age="{{item.ageMonths}}">
+          <view class="assessment-info">
+            <text class="assessment-name">{{item.label}}</text>
+            <text class="assessment-status">点击进行评估</text>
+          </view>
+          <text class="assessment-arrow">></text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 已完成评估 -->
+    <view class="section" wx:if="{{assessmentRecords.length > 0}}">
+      <view class="section-title">已完成评估</view>
+      <view class="assessment-list">
+        <view class="assessment-item completed" 
+              wx:for="{{assessmentRecords}}" 
+              wx:key="id"
+              bindtap="viewAssessmentDetail"
+              data-id="{{item.id}}">
+          <view class="assessment-info">
+            <text class="assessment-name">{{item.ageMonths}}月龄评估</text>
+            <text class="assessment-date">{{item.assessmentDate}}</text>
+          </view>
+          <view class="assessment-result">
+            <text class="result-tag {{item.overallStatus}}">{{item.overallStatus === 'normal' ? '正常' : '需关注'}}</text>
+            <text class="assessment-arrow">></text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{assessmentRecords.length === 0 && pendingAssessments.length === 0}}">
+      <text class="empty-text">暂无评估记录</text>
+      <text class="empty-subtext">宝宝信息完善后将显示待评估项目</text>
+    </view>
+  </view>
+
+  <!-- 添加记录悬浮按钮 -->
+  <view class="fab" bindtap="showAddRecord">
+    <text class="fab-icon">+</text>
+  </view>
+
+  <!-- 删除确认弹窗 -->
+  <view class="modal-mask" wx:if="{{showDeleteModal}}" bindtap="cancelDelete">
+    <view class="modal-content" catchtap="preventBubble">
+      <view class="modal-header">
+        <text class="modal-title">确认删除</text>
+      </view>
+      <view class="modal-body">
+        <text class="modal-text">确定要删除这条喂养记录吗？此操作不可恢复。</text>
+      </view>
+      <view class="modal-footer">
+        <button class="modal-btn modal-btn-cancel" bindtap="cancelDelete">取消</button>
+        <button class="modal-btn modal-btn-confirm" bindtap="confirmDelete">删除</button>
+      </view>
+    </view>
+  </view>
+</view>

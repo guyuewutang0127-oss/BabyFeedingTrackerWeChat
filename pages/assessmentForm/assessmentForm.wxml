@@ -1,0 +1,211 @@
+<view class="container">
+  <!-- 评估表单 -->
+  <block wx:if="{{!showResult}}">
+    <view class="form-card">
+      <view class="card-title">
+        <view class="card-title-icon"></view>
+        <text>基本信息</text>
+      </view>
+      
+      <!-- 评估月龄 -->
+      <view class="form-item">
+        <text class="form-label required">评估月龄</text>
+        <picker bindchange="onAgeChange" value="{{ageOptions.indexOf(ageMonths)}}" range="{{ageOptions}}">
+          <view class="picker-item">
+            <text class="picker-text">{{ageMonths}}月龄</text>
+            <text class="picker-arrow">▼</text>
+          </view>
+        </picker>
+      </view>
+
+      <!-- 评估日期 -->
+      <view class="form-item">
+        <text class="form-label required">评估日期</text>
+        <picker mode="date" value="{{assessmentDate}}" bindchange="onDateChange">
+          <view class="picker-item">
+            <text class="picker-text">{{assessmentDate}}</text>
+            <text class="picker-arrow">▼</text>
+          </view>
+        </picker>
+      </view>
+
+      <!-- 身高 -->
+      <view class="form-item">
+        <text class="form-label required">身高 (cm)</text>
+        <input 
+          class="form-input {{errors.height ? 'error' : ''}}"
+          type="digit"
+          placeholder="请输入身高"
+          value="{{height}}"
+          bindinput="onHeightInput"
+        />
+        <text class="error-text" wx:if="{{errors.height}}">{{errors.height}}</text>
+      </view>
+
+      <!-- 体重 -->
+      <view class="form-item">
+        <text class="form-label required">体重 (kg)</text>
+        <input 
+          class="form-input {{errors.weight ? 'error' : ''}}"
+          type="digit"
+          placeholder="请输入体重"
+          value="{{weight}}"
+          bindinput="onWeightInput"
+        />
+        <text class="error-text" wx:if="{{errors.weight}}">{{errors.weight}}</text>
+      </view>
+    </view>
+
+    <view class="form-card">
+      <view class="card-title">
+        <view class="card-title-icon"></view>
+        <text>喂养情况</text>
+      </view>
+      
+      <!-- 喂养方式 -->
+      <view class="form-item">
+        <text class="form-label">喂养方式</text>
+        <picker bindchange="onFeedingMethodChange" value="{{0}}" range="{{feedingMethodOptions}}" range-key="label">
+          <view class="picker-item">
+            <text class="picker-text">{{feedingMethodOptions[0].label}}</text>
+            <text class="picker-arrow">▼</text>
+          </view>
+        </picker>
+      </view>
+
+      <!-- 每日喂养次数 -->
+      <view class="form-item">
+        <text class="form-label">每日喂养次数</text>
+        <input 
+          class="form-input"
+          type="number"
+          placeholder="请输入每日喂养次数"
+          value="{{dailyFeedCount}}"
+          bindinput="onDailyFeedCountInput"
+        />
+      </view>
+
+      <!-- 日均总奶量 -->
+      <view class="form-item">
+        <text class="form-label">日均总奶量 (ml)</text>
+        <input 
+          class="form-input"
+          type="number"
+          placeholder="请输入日均总奶量"
+          value="{{dailyMilkAmount}}"
+          bindinput="onDailyMilkAmountInput"
+        />
+      </view>
+
+      <!-- 单次最大奶量 -->
+      <view class="form-item">
+        <text class="form-label">单次最大奶量 (ml)</text>
+        <input 
+          class="form-input"
+          type="number"
+          placeholder="请输入单次最大奶量"
+          value="{{maxPerFeed}}"
+          bindinput="onMaxPerFeedInput"
+        />
+      </view>
+
+      <!-- 辅食添加 -->
+      <view class="form-item">
+        <text class="form-label">辅食添加情况</text>
+        <checkbox-group bindchange="onFoodChange">
+          <label class="checkbox-item" wx:for="{{foodOptions}}" wx:key="value">
+            <checkbox value="{{item.value}}" />{{item.label}}
+          </label>
+        </checkbox-group>
+      </view>
+    </view>
+
+    <view class="form-card">
+      <view class="card-title">
+        <view class="card-title-icon"></view>
+        <text>其他情况</text>
+      </view>
+      
+      <!-- 睡眠情况 -->
+      <view class="form-item">
+        <text class="form-label">睡眠情况</text>
+        <textarea 
+          class="form-textarea"
+          placeholder="请描述宝宝睡眠情况"
+          value="{{sleepStatus}}"
+          bindinput="onSleepChange"
+        />
+      </view>
+
+      <!-- 排便情况 -->
+      <view class="form-item">
+        <text class="form-label">排便情况</text>
+        <textarea 
+          class="form-textarea"
+          placeholder="请描述宝宝排便情况"
+          value="{{poopStatus}}"
+          bindinput="onPoopChange"
+        />
+      </view>
+    </view>
+
+    <!-- 按钮组 -->
+    <view class="button-group">
+      <button class="btn btn-secondary" bindtap="cancel">取消</button>
+      <button class="btn btn-primary" bindtap="calculateAssessment">开始评估</button>
+    </view>
+  </block>
+
+  <!-- 评估结果 -->
+  <block wx:if="{{showResult && assessmentResult}}">
+    <view class="result-card">
+      <view class="result-header">
+        <text class="result-title">评估报告</text>
+        <text class="result-date">{{assessmentResult.assessmentDate}}</text>
+      </view>
+      
+      <!-- 生长发育评估 -->
+      <view class="result-section">
+        <view class="section-title">生长发育</view>
+        <view class="growth-grid">
+          <view class="growth-item">
+            <text class="growth-label">身高</text>
+            <text class="growth-value">{{assessmentResult.height.value}}cm</text>
+            <text class="growth-status {{assessmentResult.height.status.level}}">{{assessmentResult.height.status.text}}</text>
+            <text class="growth-percent">百分位: {{assessmentResult.height.percent}}</text>
+          </view>
+          <view class="growth-item">
+            <text class="growth-label">体重</text>
+            <text class="growth-value">{{assessmentResult.weight.value}}kg</text>
+            <text class="growth-status {{assessmentResult.weight.status.level}}">{{assessmentResult.weight.status.text}}</text>
+            <text class="growth-percent">百分位: {{assessmentResult.weight.percent}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 喂养评估 -->
+      <view class="result-section">
+        <view class="section-title">喂养评估</view>
+        <view class="feeding-result">
+          <view class="feeding-item">
+            <text class="feeding-label">奶量状态</text>
+            <text class="feeding-status {{assessmentResult.feedingSuggestion.status === '达标' ? 'normal' : 'warning'}}">{{assessmentResult.feedingSuggestion.status}}</text>
+          </view>
+          <view class="suggestion-text">{{assessmentResult.feedingSuggestion.suggestion}}</view>
+        </view>
+      </view>
+
+      <!-- 综合建议 -->
+      <view class="result-section">
+        <view class="section-title">综合建议</view>
+        <view class="overall-suggestion">{{assessmentResult.overallSuggestion}}</view>
+      </view>
+    </view>
+
+    <!-- 按钮组 -->
+    <view class="button-group">
+      <button class="btn btn-secondary" bindtap="reAssess">重新评估</button>
+      <button class="btn btn-primary" bindtap="saveAssessment">保存评估</button>
+    </view>
+  </block>
+</view>

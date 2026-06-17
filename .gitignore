@@ -1,0 +1,21 @@
+# 微信开发者工具私有配置（含真实 AppID）
+project.private.config.json
+
+# IDE 与编辑器
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 依赖与构建产物
+node_modules/
+miniprogram_npm/
+
+# 日志与临时文件
+*.log
+*.tmp
+
+# 本地数据备份（含个人隐私）
+*.csv
+backup/

@@ -1,0 +1,53 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/history/history",
+    "pages/statistics/statistics",
+    "pages/settings/settings",
+    "pages/assessment/assessment",
+    "pages/assessmentForm/assessmentForm",
+    "pages/feedingSchedule/feedingSchedule",
+    "pages/addRecord/addRecord"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#FFB6C1",
+    "navigationBarTitleText": "宝宝喂养记录",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#FFF5F7"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#FF6B8A",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "记录",
+        "iconPath": "images/icon_record.png",
+        "selectedIconPath": "images/icon_record_active.png"
+      },
+      {
+        "pagePath": "pages/history/history",
+        "text": "历史",
+        "iconPath": "images/icon_history.png",
+        "selectedIconPath": "images/icon_history_active.png"
+      },
+      {
+        "pagePath": "pages/statistics/statistics",
+        "text": "统计",
+        "iconPath": "images/icon_stats.png",
+        "selectedIconPath": "images/icon_stats_active.png"
+      },
+      {
+        "pagePath": "pages/settings/settings",
+        "text": "设置",
+        "iconPath": "images/icon_settings.png",
+        "selectedIconPath": "images/icon_settings_active.png"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

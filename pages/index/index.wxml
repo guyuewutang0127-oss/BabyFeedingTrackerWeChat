@@ -1,0 +1,277 @@
+<view class="container">
+  <!-- 宝宝信息卡片 -->
+  <view class="baby-card">
+    <view class="baby-info">
+      <image class="baby-avatar" src="{{babyInfo.avatar || '/images/default_baby.png'}}" mode="aspectFill"/>
+      <view class="baby-detail">
+        <text class="baby-name">{{babyInfo.name || '宝宝'}}</text>
+        <text class="baby-age" wx:if="{{babyAge}}">{{babyAge}}</text>
+      </view>
+    </view>
+    <view class="feeding-status" style="color: {{feedingStatus.color || '#52C41A'}}">
+      <text class="status-text">{{feedingStatus.statusText || '正常'}}</text>
+    </view>
+  </view>
+
+  <!-- 喂养倒计时卡片 -->
+  <view class="countdown-card" wx:if="{{lastFeedingInfo.hasRecord}}">
+    <view class="countdown-header">
+      <view class="last-feed">
+        <text class="last-label">上次喂养</text>
+        <text class="last-time">{{lastFeedingInfo.time}} {{lastFeedingInfo.timeAgo}}</text>
+      </view>
+      <view class="last-amount" wx:if="{{lastFeedingInfo.amount > 0}}">
+        <text class="amount-value">{{lastFeedingInfo.amount}}ml</text>
+      </view>
+    </view>
+    <view class="countdown-body">
+      <view class="countdown-info">
+        <text class="countdown-label" style="color: {{nextFeedingCountdown.color}}">{{nextFeedingCountdown.label}}</text>
+        <text class="countdown-value" style="color: {{nextFeedingCountdown.color}}">{{nextFeedingCountdown.value}}</text>
+      </view>
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{nextFeedingCountdown.progress}}; background: {{nextFeedingCountdown.color || '#52C41A'}}"></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 今日统计 -->
+  <view class="stats-card">
+    <view class="stats-header">
+      <text class="stats-title">今日统计</text>
+      <text class="stats-date">{{todayDate}}</text>
+    </view>
+    <view class="stats-grid">
+      <view class="stats-item">
+        <text class="stats-value">{{todayStats.count}}</text>
+        <text class="stats-label">喂养次数</text>
+      </view>
+      <view class="stats-item">
+        <text class="stats-value">{{todayStats.totalAmount}}</text>
+        <text class="stats-label">总奶量(ml)</text>
+      </view>
+      <view class="stats-item">
+        <text class="stats-value">{{todayStats.avgAmount}}</text>
+        <text class="stats-label">平均奶量(ml)</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 录入方式切换 -->
+  <view class="input-mode-tabs">
+    <view class="tab-item {{inputMode === 'timer' ? 'active' : ''}}" bindtap="switchInputMode" data-mode="timer">
+      <text>计时录入</text>
+    </view>
+    <view class="tab-item {{inputMode === 'text' ? 'active' : ''}}" bindtap="switchInputMode" data-mode="text">
+      <text>文字提取</text>
+    </view>
+  </view>
+
+  <!-- 计时录入 -->
+  <view class="timer-card" wx:if="{{inputMode === 'timer'}}">
+    <!-- 计时显示 -->
+    <view class="timer-display" wx:if="{{isTiming}}">
+      <text class="timer-value">{{formattedDuration}}</text>
+      <text class="timer-label">喂养时长</text>
+      <text class="timer-edit" bindtap="showTimeEditModal">调整时间</text>
+    </view>
+
+    <!-- 喂养类型选择 -->
+    <view class="feeding-type-section" wx:if="{{isTiming}}">
+      <text class="section-label">喂养类型</text>
+      <picker bindchange="onFeedingTypeChange" value="{{0}}" range="{{feedingTypeOptions}}" range-key="label">
+        <view class="type-picker">
+          <text class="type-text">{{feedingTypeOptions[feedingTypeIndex].label || '奶粉'}}</text>
+          <text class="type-arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 奶量输入（非母乳时显示） -->
+    <view class="amount-section" wx:if="{{isTiming && feedingType !== 'breastfeeding'}}">
+      <view class="input-row">
+        <view class="input-group">
+          <text class="input-label">冲泡量 (ml)</text>
+          <input class="amount-input" type="number" placeholder="0" value="{{preparedAmount}}" bindinput="onPreparedAmountInput"/>
+        </view>
+        <view class="input-group">
+          <text class="input-label">实际奶量 (ml)</text>
+          <input class="amount-input" type="number" placeholder="0" value="{{actualAmount}}" bindinput="onActualAmountInput"/>
+        </view>
+      </view>
+      <text class="copy-last" bindtap="copyLastRecord">复制上次</text>
+    </view>
+
+    <!-- 按钮组 -->
+    <view class="timer-actions">
+      <button class="btn btn-primary btn-large" wx:if="{{!isTiming && !showTimerConfirm}}" bindtap="startFeeding">
+        开始喂奶
+      </button>
+      <block wx:if="{{isTiming}}">
+        <button class="btn btn-secondary btn-medium" bindtap="cancelFeeding">取消</button>
+        <button class="btn btn-primary btn-medium" bindtap="stopFeeding">结束喂养</button>
+      </block>
+    </view>
+
+    <!-- 计时确认录入（结束喂养后先确认再保存） -->
+    <view class="timer-confirm" wx:if="{{showTimerConfirm && timerConfirmRecord}}">
+      <view class="result-title">确认录入</view>
+      <view class="confirm-row">
+        <text class="confirm-label">开始时间</text>
+        <picker mode="time" value="{{timerConfirmTimeStr}}" bindchange="onTimerConfirmField" data-field="startTime">
+          <view class="confirm-value">{{timerConfirmTimeStr || '选择'}}</view>
+        </picker>
+      </view>
+      <view class="confirm-row">
+        <text class="confirm-label">时长(分钟)</text>
+        <input class="confirm-input" type="number" value="{{timerConfirmRecord.duration}}" data-field="duration" bindinput="onTimerConfirmField"/>
+      </view>
+      <view class="confirm-row" wx:if="{{timerConfirmRecord.feedingType !== 'breastfeeding'}}">
+        <text class="confirm-label">冲泡量(ml)</text>
+        <input class="confirm-input" type="number" value="{{timerConfirmRecord.preparedAmount}}" data-field="preparedAmount" bindinput="onTimerConfirmField"/>
+      </view>
+      <view class="confirm-row" wx:if="{{timerConfirmRecord.feedingType !== 'breastfeeding'}}">
+        <text class="confirm-label">实际奶量(ml)</text>
+        <input class="confirm-input" type="number" value="{{timerConfirmRecord.actualAmount}}" data-field="actualAmount" bindinput="onTimerConfirmField"/>
+      </view>
+      <view class="confirm-row">
+        <text class="confirm-label">喂养类型</text>
+        <picker bindchange="onTimerConfirmField" value="{{timerConfirmTypeIndex}}" range="{{feedingTypeOptions}}" range-key="label" data-field="feedingType">
+          <view class="confirm-value">{{feedingTypeOptions[timerConfirmTypeIndex].label}}</view>
+        </picker>
+      </view>
+      <view class="confirm-actions">
+        <button class="btn btn-secondary btn-medium" bindtap="cancelTimerConfirm">取消</button>
+        <button class="btn btn-primary btn-medium" bindtap="confirmTimerSave">确认保存</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 文字提取 -->
+  <view class="parse-card" wx:if="{{inputMode === 'text'}}">
+    <view class="parse-input-wrapper">
+      <textarea 
+        class="parse-textarea" 
+        placeholder="{{parsePlaceholder}}"
+        value="{{parseText}}"
+        bindinput="onParseTextInput"
+        maxlength="200"
+        auto-height
+      />
+      <text class="parse-clear" wx:if="{{parseText}}" bindtap="clearParseText">×</text>
+    </view>
+    
+    <view class="parse-examples" bindtap="showExamples">
+      <text class="examples-text">查看示例</text>
+    </view>
+    <view class="voice-hint">支持口语化表达，如：刚刚喂了100、泡了120、喝了10分钟；或十分钟前喂的、半小时前喝了80ml。</view>
+
+    <button class="btn btn-primary btn-large" bindtap="parseText">提取信息</button>
+
+    <!-- 解析结果：多条可编辑，确认后保存 -->
+    <view class="parse-result" wx:if="{{parseResult && parseResult.records && parseResult.records.length > 0}}">
+      <view class="result-title">确认录入（可修改后保存）</view>
+      <view class="parse-records-list">
+        <view class="parse-record-item {{item.isSupplement ? 'supplement' : ''}}" wx:for="{{parseResult.records}}" wx:key="index">
+          <view class="parse-record-label" wx:if="{{item.isSupplement}}">补喝</view>
+          <view class="confirm-row">
+            <text class="confirm-label">开始时间</text>
+            <picker mode="time" value="{{item.displayStartTime}}" bindchange="updateParseRecord" data-index="{{index}}" data-field="startTime">
+              <view class="confirm-value">{{item.displayStartTime || '选择'}}</view>
+            </picker>
+          </view>
+          <view class="confirm-row" wx:if="{{item.isSupplement}}">
+            <text class="confirm-label">奶量(ml)</text>
+            <input class="confirm-input" type="number" value="{{item.actualAmount}}" data-index="{{index}}" data-field="actualAmount" bindinput="updateParseRecord"/>
+          </view>
+          <block wx:if="{{!item.isSupplement}}">
+            <view class="confirm-row" wx:if="{{item.feedingType !== 'breastfeeding'}}">
+              <text class="confirm-label">冲泡量(ml)</text>
+              <input class="confirm-input" type="number" value="{{item.preparedAmount}}" data-index="{{index}}" data-field="preparedAmount" bindinput="updateParseRecord"/>
+            </view>
+            <view class="confirm-row" wx:if="{{item.feedingType !== 'breastfeeding'}}">
+              <text class="confirm-label">实际奶量(ml)</text>
+              <input class="confirm-input" type="number" value="{{item.actualAmount}}" data-index="{{index}}" data-field="actualAmount" bindinput="updateParseRecord"/>
+            </view>
+            <view class="confirm-row">
+              <text class="confirm-label">时长(分钟)</text>
+              <input class="confirm-input" type="number" value="{{item.duration}}" data-index="{{index}}" data-field="duration" bindinput="updateParseRecord"/>
+            </view>
+            <view class="confirm-row">
+              <text class="confirm-label">喂养类型</text>
+              <picker bindchange="updateParseRecord" value="{{item.feedingTypeIndex}}" range="{{feedingTypeOptions}}" range-key="label" data-index="{{index}}" data-field="feedingType">
+                <view class="confirm-value">{{feedingTypeOptions[item.feedingTypeIndex || 0].label}}</view>
+              </picker>
+            </view>
+          </block>
+        </view>
+      </view>
+      <button class="btn btn-primary btn-medium" bindtap="saveParsedRecord">确认保存</button>
+    </view>
+  </view>
+
+  <!-- 今日记录列表 -->
+  <view class="today-records" wx:if="{{todayRecords.length > 0}}">
+    <view class="records-title">今日记录</view>
+    <view class="records-list">
+      <view class="record-item {{item.isSupplement ? 'supplement-item' : ''}}" wx:for="{{todayRecords}}" wx:key="id">
+        <view class="record-time-row">
+          <text class="record-time">{{item.displayTime}}</text>
+          <text class="record-tag supplement-tag" wx:if="{{item.isSupplement}}">补喝</text>
+        </view>
+        <text class="record-amount">{{item.actualAmount}}ml</text>
+        <text class="record-duration" wx:if="{{!item.isSupplement && item.duration > 0}}">{{item.duration}}分钟</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 时间编辑弹窗 -->
+  <view class="modal-mask" wx:if="{{showTimeEdit}}" bindtap="hideTimeEditModal">
+    <view class="modal-content" catchtap="preventBubble">
+      <view class="modal-header">
+        <text class="modal-title">调整时间</text>
+      </view>
+      <view class="modal-body">
+        <view class="form-item">
+          <text class="form-label">开始时间</text>
+          <picker mode="time" value="{{editStartTime}}" bindchange="onEditStartTimeChange">
+            <view class="picker-item">
+              <text class="picker-text">{{editStartTime}}</text>
+              <text class="picker-arrow">▼</text>
+            </view>
+          </picker>
+        </view>
+        <view class="form-item">
+          <text class="form-label">结束时间</text>
+          <picker mode="time" value="{{editEndTime}}" bindchange="onEditEndTimeChange">
+            <view class="picker-item">
+              <text class="picker-text">{{editEndTime}}</text>
+              <text class="picker-arrow">▼</text>
+            </view>
+          </picker>
+        </view>
+      </view>
+      <view class="modal-footer">
+        <button class="modal-btn modal-btn-cancel" bindtap="hideTimeEditModal">取消</button>
+        <button class="modal-btn modal-btn-confirm" bindtap="saveTimeEdit">确定</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 示例弹窗 -->
+  <view class="modal-mask" wx:if="{{showExamplesModal}}" bindtap="closeExamples">
+    <view class="modal-content" catchtap="preventBubble">
+      <view class="modal-header">
+        <text class="modal-title">解析示例</text>
+      </view>
+      <view class="modal-body">
+        <view class="example-item" wx:for="{{parseExamples}}" wx:key="*this">
+          <text class="example-text">{{item}}</text>
+        </view>
+      </view>
+      <view class="modal-footer">
+        <button class="modal-btn modal-btn-confirm" bindtap="closeExamples">知道了</button>
+      </view>
+    </view>
+  </view>
+</view>
